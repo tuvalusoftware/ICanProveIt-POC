@@ -31,11 +31,12 @@ export default function QuestionCard({ context, question, order }: QuestionCardP
 	return (
 		<>
 			<Card
+				type='inner'
 				title={
 					<Space style={{ width: '100%', justifyContent: 'space-between' }}>
 						<h3>Question {order}</h3>
-						<Space>
-							<Button type='link' icon={<InfoCircleOutlined />} onClick={() => setIsShowContext(true)}>
+						<Space.Compact>
+							<Button icon={<InfoCircleOutlined />} size='small' onClick={() => setIsShowContext(true)}>
 								Show context
 							</Button>
 
@@ -43,24 +44,27 @@ export default function QuestionCard({ context, question, order }: QuestionCardP
 								type='primary'
 								icon={<PlayCircleOutlined />}
 								loading={isGeneratingAnswer}
+								size='small'
 								onClick={handleGetAnswer}
 							>
 								Get answer
 							</Button>
-						</Space>
+						</Space.Compact>
 					</Space>
 				}
 				size='small'
 			>
-				{question}
+				<div style={{ marginBottom: 10 }}>{question}</div>
 
-				{answer && <Alert type='success' message={answer} />}
+				{answer && <Alert showIcon type='info' message={answer} />}
 			</Card>
 
 			<Modal
 				title={`Context ${order}`}
 				open={isShowContext}
 				okButtonProps={{ style: { display: 'none' } }}
+				cancelButtonProps={{ style: { display: 'none' } }}
+				centered
 				onCancel={() => setIsShowContext(false)}
 			>
 				{context}
