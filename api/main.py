@@ -4,6 +4,7 @@ from fastapi import FastAPI, UploadFile
 from PyPDF2 import PdfReader
 from pydantic import BaseModel
 from transformers import pipeline
+from fastapi.middleware.cors import CORSMiddleware
 
 MAX_INPUT_TOKENS = 256
 
@@ -33,6 +34,8 @@ class GenerateAnswerRes(BaseModel):
 
 app = FastAPI()
 
+app.add_middleware(CORSMiddleware, allow_origins=['*'], allow_methods=['*'], allow_headers=['*'])
+
 def split_questions(text:str) -> list[str]:
     texts = text.split('Question:')
     questions = []
@@ -57,7 +60,7 @@ def pdf_to_text(file: UploadFile):
 
     return PdfToTextRes(text=text)
 
-@app.post('/pdf-to-questions', response_model=GenerateQuestionsRes, tags=['PDF', 'Generate'], summary='Generate Questions from PDF')
+@app.post('/generate/pdf-to-questions', response_model=GenerateQuestionsRes, tags=['Generate'], summary='Generate Questions from PDF')
 def pdf_to_questions(file: UploadFile):
     text = pdf_to_text(file).text
     return generate_questions(GenerateQuestionsReq(text=text))
@@ -78,7 +81,7 @@ def generate_questions(req: GenerateQuestionsReq):
 
     return result
 
-@app.post('/generate/answers', response_model=GenerateAnswerRes, tags=['Generate'], summary='Generate Answers')
+@app.post('/generate/answer', response_model=GenerateAnswerRes, tags=['Generate'], summary='Generate Answers')
 def generate_answer(req: GenerateAnswerReq):
     answer_raw:str = qa_pipe({'context': req.context, 'question': req.question})['answer'] # type: ignore
     return GenerateAnswerRes(answer=answer_raw)
