@@ -56,7 +56,7 @@ def pdf_to_text(file: UploadFile):
     text = ''
 
     for page in pages:
-        text += f'{page.extract_text()}\n'
+        text += f'{page.extract_text()}\n'.encode('utf-8', 'ignore').decode('utf-8', 'ignore')
 
     return PdfToTextRes(text=text)
 
