@@ -1,6 +1,8 @@
 .wrapper {
-	width: 1024px;
-	margin: 0 auto;
+	display: flex;
+	min-height: 100vh;
+	width: 100%;
+	background: #fafafa;
 }
 
 .preview {
@@ -8,4 +10,9 @@
 	height: 500px;
 	border: none;
 	border-radius: 10px;
+}
+
+.previewWrapper {
+	position: sticky;
+	top: 0;
 }
