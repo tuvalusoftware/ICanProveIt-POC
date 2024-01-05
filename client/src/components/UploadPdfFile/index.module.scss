@@ -1,0 +1,14 @@
+.wrapper {
+	padding: 20px;
+	border: 2px dashed #ddd;
+	border-radius: 10px;
+	cursor: pointer;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	align-items: center;
+
+	&:hover {
+		border: 2px dashed #22a6da;
+	}
+}
