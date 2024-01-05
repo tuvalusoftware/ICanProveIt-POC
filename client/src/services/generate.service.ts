@@ -11,6 +11,8 @@ export type GenerateAnswerRes = {
 	answer: string;
 };
 
+export type TextToQuestionRes = PdfToQuestionRes;
+
 class GenerateService {
 	private client: AxiosInstance;
 
@@ -31,6 +33,10 @@ class GenerateService {
 
 	async generateAnswer(question: QuestionAndContext) {
 		return (await this.client.post('/answer', question)) as GenerateAnswerRes;
+	}
+
+	async textToQuestions(text: string) {
+		return (await this.client.post('/questions', { text })) as TextToQuestionRes;
 	}
 }
 

@@ -5,6 +5,7 @@ services:
     build: ./api
     ports:
       - "8000:80"
+    restart: always
 
   client:
     build: ./client
@@ -12,3 +13,4 @@ services:
       - "3000:3000"
     environment:
       - VITE_APP_API_URL=http://localhost:8000
+    restart: always

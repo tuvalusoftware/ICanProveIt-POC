@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { InfoCircleOutlined, PlayCircleOutlined } from '@ant-design/icons';
+import { InfoCircleOutlined, RobotOutlined } from '@ant-design/icons';
 import { Alert, Button, Card, Modal, Space, message } from 'antd';
 import { useCallback, useState } from 'react';
 import generateService from '../../services/generate.service';
@@ -37,17 +37,17 @@ export default function QuestionCard({ context, question, order }: QuestionCardP
 						<h3>Question {order}</h3>
 						<Space.Compact>
 							<Button icon={<InfoCircleOutlined />} size='small' onClick={() => setIsShowContext(true)}>
-								Show context
+								Context
 							</Button>
 
 							<Button
 								type='primary'
-								icon={<PlayCircleOutlined />}
+								icon={<RobotOutlined />}
 								loading={isGeneratingAnswer}
 								size='small'
 								onClick={handleGetAnswer}
 							>
-								Get answer
+								Answer
 							</Button>
 						</Space.Compact>
 					</Space>

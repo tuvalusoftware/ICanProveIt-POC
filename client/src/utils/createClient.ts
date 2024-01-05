@@ -9,7 +9,9 @@ export default function createClient(baseURL: string = '') {
 
 	client.interceptors.response.use(
 		(res) => res.data,
-		(error) => (error.response?.data ? { message: error.response.data.detail } : error),
+		(error) => {
+			throw error.response?.data ? { message: error.response.data.detail } : error;
+		},
 	);
 
 	return client;
