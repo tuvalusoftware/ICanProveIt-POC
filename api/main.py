@@ -47,7 +47,7 @@ def split_questions(text:str) -> list[str]:
 
     return questions
 
-@app.post('/pdf-to-text', response_model=PdfToTextRes, tags=['PDF'], summary='Convert PDF to Text')
+@app.post('/pdf/to-text', response_model=PdfToTextRes, tags=['PDF'], summary='Convert PDF to Text')
 def pdf_to_text(file: UploadFile):
     reader = PdfReader(file.file)
 
