@@ -1,13 +1,11 @@
 import time
-import platform
 import pytesseract
 
 from fastapi import FastAPI, UploadFile
-from PyPDF2 import PdfReader
 from pydantic import BaseModel
 from transformers import pipeline
 from fastapi.middleware.cors import CORSMiddleware
-from pdf2image import convert_from_path, convert_from_bytes
+from pdf2image import convert_from_bytes
 
 MAX_INPUT_TOKENS = 256
 
