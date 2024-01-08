@@ -7,7 +7,7 @@ from transformers import pipeline
 from fastapi.middleware.cors import CORSMiddleware
 from pdf2image import convert_from_bytes
 
-MAX_INPUT_TOKENS = 256
+MAX_INPUT_TOKENS = 128
 
 generate_questions_pipe = pipeline("text2text-generation", model="thangved/t5-generate-question")
 qa_pipe = pipeline("question-answering", model="SharKRippeR/QA_T5_small_seq2seq")
@@ -24,11 +24,13 @@ class GenerateQuestionsReq(BaseModel):
 
 class QuestionAndContext(BaseModel):
     context: str
-    questions: list[str]
-    page: int
+    question: str
+
+class PageWithQuestions(Page):
+    questions: list[QuestionAndContext]
 
 class GenerateQuestionsRes(BaseModel):
-    pages: list[QuestionAndContext]
+    pages: list[PageWithQuestions]
     time: float
 
 class GenerateAnswerReq(BaseModel):
@@ -77,9 +79,16 @@ def generate_questions(req: GenerateQuestionsReq):
 
     for page in req.pages:
         print(f'[Generate questions] Processing page {page.page} of {len(req.pages)}')
-        page = QuestionAndContext(context=page.text, questions=[], page=page.page)
-        raw_questions:str = generate_questions_pipe(f'gq:{page.context}')[0]['generated_text'] # type: ignore
-        page.questions += split_questions(raw_questions)
+
+        page = PageWithQuestions(text=page.text, page=page.page, questions=[])
+        tokens = page.text.split(' ')
+
+        for i in range(0, len(tokens), MAX_INPUT_TOKENS):
+            context = ' '.join(tokens[i:i+MAX_INPUT_TOKENS])
+            raw_questions:str = generate_questions_pipe(f'gq:{context}')[0]['generated_text'] # type: ignore
+            questions = split_questions(raw_questions)
+            page.questions += map(lambda q: QuestionAndContext(context=context, question=q), questions)
+
         result.pages.append(page)
 
     end = time.time()
