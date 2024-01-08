@@ -70,7 +70,6 @@ def generate_questions(file):
     return questions
 
 def generate_answers(context='',q1='', q2='', q3=''):
-
     answers = []
 
     for q in [q1, q2, q3]:
