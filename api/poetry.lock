@@ -180,7 +180,7 @@ test = ["Cython (>=0.29.24,<0.30.0)"]
 
 [[package]]
 name = "huggingface-hub"
-version = "0.20.1"
+version = "0.20.2"
 description = "Client library to download and publish models, datasets and other repos on the huggingface.co hub"
 category = "main"
 optional = false
@@ -390,6 +390,33 @@ optional = false
 python-versions = ">=3.7"
 
 [[package]]
+name = "pdf2image"
+version = "1.17.0"
+description = "A wrapper around the pdftoppm and pdftocairo command line tools to convert PDF to a PIL Image list."
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+pillow = "*"
+
+[[package]]
+name = "pillow"
+version = "10.2.0"
+description = "Python Imaging Library (Fork)"
+category = "main"
+optional = false
+python-versions = ">=3.8"
+
+[package.extras]
+docs = ["furo", "olefile", "sphinx (>=2.4)", "sphinx-copybutton", "sphinx-inline-tabs", "sphinx-removed-in", "sphinxext-opengraph"]
+fpx = ["olefile"]
+mic = ["olefile"]
+tests = ["check-manifest", "coverage", "defusedxml", "markdown2", "olefile", "packaging", "pyroma", "pytest", "pytest-cov", "pytest-timeout"]
+typing = ["typing-extensions"]
+xmp = ["defusedxml"]
+
+[[package]]
 name = "psutil"
 version = "5.9.7"
 description = "Cross-platform lib for process and system monitoring in Python."
@@ -441,6 +468,18 @@ dev = ["black", "pip-tools", "pre-commit (<2.18.0)", "pytest-cov", "flit", "whee
 docs = ["sphinx", "sphinx-rtd-theme", "myst-parser"]
 full = ["pycryptodome", "pillow"]
 image = ["pillow"]
+
+[[package]]
+name = "pytesseract"
+version = "0.3.10"
+description = "Python-tesseract is a python wrapper for Google's Tesseract-OCR"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+
+[package.dependencies]
+packaging = ">=21.3"
+Pillow = ">=8.0.0"
 
 [[package]]
 name = "python-dotenv"
@@ -777,7 +816,7 @@ python-versions = ">=3.8"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "5ca1ebb6b9299ddb3426080500498f492aee3a47a723d83aada413eccde89dbb"
+content-hash = "25fda4cfcb7f7253657792a54c0e0b99e34f11528e97a9bcda63328e00b8fba1"
 
 [metadata.files]
 accelerate = []
@@ -813,10 +852,13 @@ nvidia-nccl-cu12 = []
 nvidia-nvjitlink-cu12 = []
 nvidia-nvtx-cu12 = []
 packaging = []
+pdf2image = []
+pillow = []
 psutil = []
 pydantic = []
 pydantic-core = []
 pypdf2 = []
+pytesseract = []
 python-dotenv = []
 python-multipart = []
 pyyaml = []

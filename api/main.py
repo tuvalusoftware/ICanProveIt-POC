@@ -1,28 +1,36 @@
 import time
+import platform
+import pytesseract
 
 from fastapi import FastAPI, UploadFile
 from PyPDF2 import PdfReader
 from pydantic import BaseModel
 from transformers import pipeline
 from fastapi.middleware.cors import CORSMiddleware
+from pdf2image import convert_from_path, convert_from_bytes
 
 MAX_INPUT_TOKENS = 256
 
 generate_questions_pipe = pipeline("text2text-generation", model="thangved/t5-generate-question")
 qa_pipe = pipeline("question-answering", model="SharKRippeR/QA_T5_small_seq2seq")
 
-class PdfToTextRes(BaseModel):
+class Page(BaseModel):
     text: str
+    page: int
+
+class PdfToTextRes(BaseModel):
+    pages: list[Page]
 
 class GenerateQuestionsReq(BaseModel):
-    text: str
+    pages: list[Page]
 
 class QuestionAndContext(BaseModel):
-    question: str
     context: str
+    questions: list[str]
+    page: int
 
 class GenerateQuestionsRes(BaseModel):
-    questions: list[QuestionAndContext]
+    pages: list[QuestionAndContext]
     time: float
 
 class GenerateAnswerReq(BaseModel):
@@ -49,32 +57,32 @@ def split_questions(text:str) -> list[str]:
 
 @app.post('/pdf/to-text', response_model=PdfToTextRes, tags=['PDF'], summary='Convert PDF to Text')
 def pdf_to_text(file: UploadFile):
-    reader = PdfReader(file.file)
+    pdf_pages = convert_from_bytes(file.file.read())
 
-    pages = reader.pages
+    result = PdfToTextRes(pages=[])
 
-    text = ''
+    for index, page in enumerate(pdf_pages):
+        print(f'[Pdf to text] Processing page {index+1} of {len(pdf_pages)}')
+        result.pages.append(Page(text=str(pytesseract.image_to_string(page)).encode(errors='ignore').decode(errors='ignore'), page=index+1))
 
-    for page in pages:
-        text += f'{page.extract_text()}\n'.encode('utf-8', 'ignore').decode('utf-8', 'ignore')
-
-    return PdfToTextRes(text=text)
+    return result
 
 @app.post('/generate/pdf-to-questions', response_model=GenerateQuestionsRes, tags=['Generate'], summary='Generate Questions from PDF')
 def pdf_to_questions(file: UploadFile):
-    text = pdf_to_text(file).text
-    return generate_questions(GenerateQuestionsReq(text=text))
+    text = pdf_to_text(file)
+    return generate_questions(GenerateQuestionsReq(pages=text.pages))
 
 @app.post('/generate/questions', response_model=GenerateQuestionsRes, tags=['Generate'], summary='Generate Questions')
 def generate_questions(req: GenerateQuestionsReq):
     start = time.time()
-    result = GenerateQuestionsRes(questions=[], time=0)
+    result = GenerateQuestionsRes(pages=[], time=0)
 
-    tokens = req.text.split(' ')
-    for i in range(0, len(tokens), MAX_INPUT_TOKENS):
-        context =' '.join(tokens[i:i+MAX_INPUT_TOKENS])
-        raw_questions:str = generate_questions_pipe(f'gq:{context}')[0]['generated_text'] # type: ignore
-        result.questions += map(lambda q: QuestionAndContext(question=q, context=context), split_questions(raw_questions)) # type: ignore
+    for page in req.pages:
+        print(f'[Generate questions] Processing page {page.page} of {len(req.pages)}')
+        page = QuestionAndContext(context=page.text, questions=[], page=page.page)
+        raw_questions:str = generate_questions_pipe(f'gq:{page.context}')[0]['generated_text'] # type: ignore
+        page.questions += split_questions(raw_questions)
+        result.pages.append(page)
 
     end = time.time()
     result.time = end - start
