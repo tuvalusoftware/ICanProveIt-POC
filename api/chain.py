@@ -35,19 +35,26 @@ Answer the following question based only on the provided context:
 {context}
 </context>
 
+A context should not have over 5 chapters.
+The chapter must be not a question.
 The output have multiple lines of title, first page and last page of mainpoint, format:
 Title -- First page -- Last page
+First page start from 1
 
 Example:
 1. Chapter 1 -- 1 -- 10
 2. Chapter 2 -- 11 -- 20
 3. Chapter 3 -- 21 -- 30
 
-Question: Generate list of main points with first page and last page of this context
+Question: Generate list of chapter with first page and last page of this context
 """)
 
 question_prompt = ChatPromptTemplate.from_template("""
-Answer the following question based only on the provided context:
+You is a teacher.
+You want to make a question for your student based on the provided context.
+The question only focus on the context.
+The question must be simple and easy to understand.
+The question must be focus to a problem or theorems.
 
 <context>
 {context}
@@ -67,7 +74,7 @@ a: Answer of question 2
 q: Content of question 3
 a: Answer of question 3
 
-Question: Generate questions and answer of this context
+Question: Generate list of questions
 """)
 
 output_parser = StrOutputParser()

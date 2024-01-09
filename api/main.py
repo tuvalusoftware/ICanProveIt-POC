@@ -68,7 +68,7 @@ async def get_pdf(project_id: int, db: Session = Depends(get_db)):
         return Response(content=f.read(), media_type='application/pdf')
 
 @app.post('/projects/{project_id}/chapters/generate', tags=['Chapters', 'Projects'], summary='Generate new chapter', response_model=schemas.Project)
-async def generate_chapter(project_id: int, db: Session = Depends(get_db)):
+async def generate_chapters(project_id: int, db: Session = Depends(get_db)):
     project = curd.get_project(db, project_id=project_id)
 
     pages = PyPDFLoader(project.filepath).load_and_split()

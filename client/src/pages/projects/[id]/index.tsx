@@ -98,6 +98,7 @@ export default function ProjectPage() {
 													<Tooltip title='Generate questions'>
 														<Button
 															icon={<PlusCircleOutlined />}
+															type='primary'
 															loading={chapterLoading === chapter.id}
 															onClick={() => handleGenerateQuestions(chapter.id)}
 														></Button>
