@@ -106,7 +106,7 @@ async def generate_questions(chapter_id: int, db: Session = Depends(get_db)):
     pages = PyPDFLoader(project.filepath).load_and_split()
 
     try:
-        questions = chain.question_chain.invoke({'context': pages[chapter.first_page-1:chapter.last_page+1]}).split('\n')
+        questions = chain.question_chain.invoke({'context': pages[chapter.first_page-1:chapter.last_page+1], 'topic': chapter.title}).split('\n')
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
