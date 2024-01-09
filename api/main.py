@@ -1,12 +1,11 @@
 import time
 
-from fastapi import FastAPI, UploadFile, Depends
+from fastapi import FastAPI, UploadFile, Depends, Response, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from langchain_community.document_loaders import PyPDFLoader
-from chain import chain
 from sqlalchemy.orm import Session
 
-import models, curd, schemas
+import models, curd, schemas, chain
 from database import engine, SessionLocal
 
 
@@ -31,12 +30,19 @@ app.add_middleware(
 
 @app.post('/projects', tags=['Projects'], summary='Create a new project', response_model=schemas.Project)
 async def create_project(file: UploadFile, db: Session = Depends(get_db)):
+    if file.content_type != 'application/pdf':
+        raise HTTPException(status_code=400, detail='Only PDF file is supported')
+
     filename = f'./uploads/{time.time()}.pdf'
     with open(filename, 'wb') as f:
         f.write(file.file.read())
 
-    pages = PyPDFLoader(filename).load_and_split()[:10]
-    title = chain.invoke({'input': 'Generate title of the document', 'context': pages}).strip()
+    pages = PyPDFLoader(filename).load_and_split()[:5]
+
+    try:
+        title = chain.title_chain.invoke({'context': pages}).strip()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
     project = schemas.ProjectCreate(title=title, filepath=filename)
 
@@ -54,13 +60,25 @@ async def get_project(project_id: int, db: Session = Depends(get_db)):
 async def delete_all_projects(db: Session = Depends(get_db)):
     return curd.delete_all_projects(db)
 
+@app.get('/projects/{project_id}/pdf', tags=['Projects'], summary='Get pdf of a project')
+async def get_pdf(project_id: int, db: Session = Depends(get_db)):
+    project = curd.get_project(db, project_id=project_id)
+
+    with open(project.filepath, 'rb') as f:
+        return Response(content=f.read(), media_type='application/pdf')
+
 @app.post('/projects/{project_id}/chapters/generate', tags=['Chapters', 'Projects'], summary='Generate new chapter', response_model=schemas.Project)
 async def generate_chapter(project_id: int, db: Session = Depends(get_db)):
     project = curd.get_project(db, project_id=project_id)
 
     pages = PyPDFLoader(project.filepath).load_and_split()
 
-    chapters = chain.invoke({'input': 'Generate list of main points of this document\n Format: Title -- firstpage -- lastpage \n Do not explain anything and no empty line', 'context': pages}).split('\n')
+    try:
+        chapters = chain.chapter_chain.invoke({'context': pages}).split('\n')
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    print(chapters)
 
     for chapter in chapters:
         chapter_splited = chapter.split('--')
@@ -74,7 +92,6 @@ async def generate_chapter(project_id: int, db: Session = Depends(get_db)):
         chapter = schemas.ChapterCreate(title=title, first_page=int(first_page), last_page=int(last_page), project_id=project_id)
         curd.create_chapter(db, chapter)
 
-
     return curd.get_project(db, project_id=project_id)
 
 @app.get('/chapters', tags=['Chapters'], summary='Get all chapters', response_model=list[schemas.Chapter])
@@ -86,9 +103,12 @@ async def generate_questions(chapter_id: int, db: Session = Depends(get_db)):
     chapter = curd.get_chapter(db, chapter_id=chapter_id)
     project = curd.get_project(db, project_id=chapter.project_id)
 
-    pages = PyPDFLoader(project.filepath).load_and_split()[chapter.first_page:chapter.last_page]
+    pages = PyPDFLoader(project.filepath).load_and_split()
 
-    questions = chain.invoke({'input': f'Generate questions and answer of {chapter.title}, format: q: question \n a: answer', 'context': pages}).split('\n')
+    try:
+        questions = chain.question_chain.invoke({'context': pages[chapter.first_page-1:chapter.last_page+1]}).split('\n')
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
     for i in range(0, len(questions), 3):
         question = schemas.QuestionCreate(question=questions[i].replace('q:', '').strip(), answer=questions[i+1].replace('a:', '').strip(), chapter_id=chapter_id)
