@@ -170,6 +170,21 @@ optional = false
 python-versions = ">=3.8"
 
 [[package]]
+name = "gpt4all"
+version = "2.0.2"
+description = "Python bindings for GPT4All"
+category = "main"
+optional = false
+python-versions = ">=3.8"
+
+[package.dependencies]
+requests = "*"
+tqdm = "*"
+
+[package.extras]
+dev = ["pytest", "twine", "wheel", "setuptools", "mkdocs-material", "mkautodoc", "mkdocstrings", "mkdocs-jupyter", "black", "isort"]
+
+[[package]]
 name = "greenlet"
 version = "3.0.3"
 description = "Lightweight in-process concurrent programming"
@@ -744,7 +759,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "eb0b8063f635b55e541dfb2fc0254db9360803fd6e8726cb17ced8c110bbe804"
+content-hash = "be31a2d7242176fff9a22ded84fec31f4631d27f8bd0af19587f43eb465f3831"
 
 [metadata.files]
 aiohttp = []
@@ -762,6 +777,7 @@ distro = []
 exceptiongroup = []
 fastapi = []
 frozenlist = []
+gpt4all = []
 greenlet = []
 h11 = []
 httpcore = []

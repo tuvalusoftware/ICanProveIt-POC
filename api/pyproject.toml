@@ -15,6 +15,7 @@ langchain = "^0.1.0"
 langchain-openai = "^0.0.2"
 SQLAlchemy = "^2.0.25"
 pypdf = "^3.17.4"
+gpt4all = "^2.0.2"
 
 [tool.poetry.dev-dependencies]
 
