@@ -15,85 +15,58 @@ prompt = ChatPromptTemplate.from_template("""Answer the following question based
 
 Question: {input}""")
 
-title_prompt = ChatPromptTemplate.from_template("""
-Answer the following question based only on the provided context:
+title_prompt = ChatPromptTemplate.from_messages([
+    ('system', """
+     You will be provided with a document delimited by triple quotes.
+     Your task is to generate a title for the document.
+     Provide a title that is a summary of the document.
+     The title should be a title, not a question.
+     The title should be in the same language as the document.
+     """),
+    ('user', '"""{context}"""')
+])
 
-<context>
-{context}
-</context>
+chapter_prompt = ChatPromptTemplate.from_messages([
+    ('system', """
+     You will be provided with a document delimited by triple quotes.
+     Your task is to generate a list of chapter for the document.
+     Provide a chapter that is a summary of the document.
+     The chapter should be a title, not a question.
+     The chapter should be in the same language as the document.
+     The question and answer should be in same language as the chapter.
+     The output have multiple lines of chapter, format:
+     order. Title -- first page -- last page (page start from 1, page is index of document)
 
-The output only single line of text.
-The output not have other words except title.
+     Example:
+     1. Chapter 1 -- 1 -- 10
+     2. Chapter 2 -- 11 -- 20
+     3. Chapter 3 -- 21 -- 30
+     """),
+    ('user', '"""{context}"""')
+])
 
-The title must be have below rules:
-- Must be a summary of a specific topic.
-- Must be a title.
+question_prompt = ChatPromptTemplate.from_messages([
+    ('system', """
+     You will be provided with a chapter content delimited by triple quotes.
+     You will be provider with a chapter title delimited by tag <title>.
+     You task is generate a list of question and answer for the chapter.
+     The question should be a problem and can answerable by context.
+     The output have multiple lines of question and answer, format:
+     q: Question?
+     a: Answer.
 
-Question: Generate title of this context
-""")
+     Example:
+     q: Content of question 1?
+     a: Content of answer 1.
 
-chapter_prompt = ChatPromptTemplate.from_template("""
-Answer the following question based only on the provided context.
-A chapter must be have below rules:
-- Must be a summary of a specific topic.
-- Must be a title.
-- Must be not a question.
-- Dont use uppercase for all words.
+     q: Content of question 2?
+     a: Content of answer 2.
 
-
-<context>
-{context}
-</context>
-
-The output have multiple lines of title, first page and last page of mainpoint, format:
-Title -- First page -- Last page
-First page start from 1
-Page is index of context
-
-Example:
-1. Chapter 1 -- 1 -- 10
-2. Chapter 2 -- 11 -- 20
-3. Chapter 3 -- 21 -- 30
-
-Question: Generate list of chapter with first page and last page of this context
-""")
-
-question_prompt = ChatPromptTemplate.from_template("""
-You is a teacher.
-You want to make a question for your student based on the provided context.
-
-Questions must be have below rules:
-    - Only focus on the context.
-    - Must be simple and easy to understand.
-    - Must be focus to a problem or theorems.
-    - Do not ask a common question.
-
-Answer must be have below rules:
-    - Must be simple and shortest as possible.
-    - Must be focus to question.
-
-Language of question and answer must is language of context.
-
-<context>
-{context}
-</context>
-
-The output have multiple lines of question and answer, format:
-q: question
-a: answer
-
-Example:
-q: Content of question 1
-a: Answer of question 1
-
-q: Content of question 2
-a: Answer of question 2
-
-q: Content of question 3
-a: Answer of question 3
-
-Question: Generate list of questions for {topic} use content of above context
-""")
+     q: Content of question 3?
+     a: Content of answer 3.
+     """),
+     ('user', '<title>{topic}</title>\n"""{context}"""')
+])
 
 output_parser = StrOutputParser()
 
