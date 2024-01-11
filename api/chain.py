@@ -5,7 +5,7 @@ from langchain_core.output_parsers import StrOutputParser
 
 load_dotenv()
 
-llm = ChatOpenAI(model='gpt-3.5-turbo-16k')
+llm = ChatOpenAI()
 
 prompt = ChatPromptTemplate.from_template("""Answer the following question based only on the provided context:
 
