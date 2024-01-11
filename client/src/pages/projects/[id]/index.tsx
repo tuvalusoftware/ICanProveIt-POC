@@ -116,7 +116,23 @@ export default function ProjectPage() {
 											dataSource={question.questions}
 											renderItem={(item) => (
 												<List.Item key={item.id}>
-													<List.Item.Meta title={item.question} description={item.answer} />
+													<List.Item.Meta
+														title={item.question}
+														description={
+															<List
+																dataSource={item.answers}
+																renderItem={(answer, index) => (
+																	<List.Item key={answer.id}>
+																		<List.Item.Meta
+																			description={`${index + 1}. ${
+																				answer.answer
+																			} (${answer.is_true ? 'true' : 'false'})`}
+																		/>
+																	</List.Item>
+																)}
+															/>
+														}
+													/>
 												</List.Item>
 											)}
 											pagination={false}

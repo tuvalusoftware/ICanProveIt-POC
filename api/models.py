@@ -29,7 +29,16 @@ class Question(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     question = Column(String, nullable=False)
-    answer = Column(String, nullable=False)
     chapter_id = Column(Integer, ForeignKey("chapters.id"))
 
     chapter = relationship("Chapter", back_populates="questions")
+    answers = relationship("Answer", back_populates="question")
+
+class Answer(Base):
+    __tablename__ = "answers"
+
+    id = Column(Integer, primary_key=True, index=True)
+    answer = Column(String, nullable=False)
+    is_true = Column(Boolean, nullable=False)
+    question_id = Column(Integer, ForeignKey("questions.id"))
+    question = relationship("Question", back_populates="answers")

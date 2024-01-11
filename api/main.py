@@ -114,8 +114,19 @@ async def generate_questions(chapter_id: int, db: Session = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-    for i in range(0, len(questions), 3):
-        question = schemas.QuestionCreate(question=questions[i].replace('q:', '').strip(), answer=questions[i+1].replace('a:', '').strip(), chapter_id=chapter_id)
-        curd.create_question(db, question)
+    print(questions)
+
+    for i in range(0, len(questions), 4):
+        question = schemas.QuestionCreate(question=questions[i].replace('q:', '').strip(), chapter_id=chapter_id)
+        answers = questions[i+1].replace('a:', '').strip().split(',')
+        true_index = int(questions[i+2].replace('t:', '').strip())
+
+        created_question = curd.create_question(db, question)
+
+        print(answers)
+
+        for i, answer in enumerate(answers):
+            answer_db = schemas.AnswerCreate(answer=answer.strip(), question_id=created_question.id, is_true=i == true_index)
+            curd.create_answer(db, answer_db)
 
     return curd.get_chapter(db, chapter_id=chapter_id)

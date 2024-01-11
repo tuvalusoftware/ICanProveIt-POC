@@ -1,20 +1,32 @@
 from pydantic import BaseModel
 
-class QuestionBase(BaseModel):
-    question: str
+class AnswerBase(BaseModel):
     answer: str
+    is_true: bool = False
 
-class QuestionCreate(QuestionBase):
-    chapter_id: int
-    pass
+class AnswerCreate(AnswerBase):
+    question_id: int
 
-class Question(QuestionBase):
+class Answer(AnswerBase):
     id: int
-    chapter_id: int
+    question_id: int
 
     class Config:
         orm_mode = True
 
+class QuestionBase(BaseModel):
+    question: str
+
+class QuestionCreate(QuestionBase):
+    chapter_id: int
+
+class Question(QuestionBase):
+    id: int
+    chapter_id: int
+    answers: list[Answer] = []
+
+    class Config:
+        orm_mode = True
 
 class ChapterBase(BaseModel):
     title: str
@@ -24,7 +36,6 @@ class ChapterBase(BaseModel):
 
 class ChapterCreate(ChapterBase):
     project_id: int
-    pass
 
 class Chapter(ChapterBase):
     id: int

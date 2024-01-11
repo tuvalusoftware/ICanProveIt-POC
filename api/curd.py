@@ -33,9 +33,16 @@ def get_chapters(db: Session, skip: int = 0, limit: int = 100):
 def get_chapter(db: Session, chapter_id: int) -> schemas.Chapter:
     return db.query(models.Chapter).filter(models.Chapter.id == chapter_id).first()
 
-def create_question(db: Session, question: schemas.QuestionCreate):
+def create_question(db: Session, question: schemas.QuestionCreate) -> schemas.Question:
     db_question = models.Question(**question.dict())
     db.add(db_question)
     db.commit()
     db.refresh(db_question)
     return db_question
+
+def create_answer(db: Session, answer: schemas.AnswerCreate) -> schemas.Answer:
+    db_answer = models.Answer(**answer.dict())
+    db.add(db_answer)
+    db.commit()
+    db.refresh(db_answer)
+    return db_answer
