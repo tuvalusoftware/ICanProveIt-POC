@@ -35,7 +35,9 @@ chapter_prompt = ChatPromptTemplate.from_messages([
      The chapter should be a title, not a question.
      The chapter should be in the same language as the document.
      The question and answer should be in same language as the chapter.
-     The output is a list json format, each chapter have 3 fields: title, first_page, last_page.
+     The output is a list json format only, each chapter have 3 fields: title, first_page, last_page.
+     Page is index of page in context, start from 1.
+     Page number must less than or equal to length of context.
      """),
     ('user', '"""{context}"""')
 ])
@@ -47,7 +49,7 @@ question_prompt = ChatPromptTemplate.from_messages([
      You task is generate a list of question, answers and index of true answer for the chapter.
      The question should be a problem and can answerable by context.
      The question should be a multiple choice question.
-     The output is a list json format, each question have 3 fields: question, answers, true_index.
+     The output is a list json format only, each question have 3 fields: question, answers, true_index.
      Answers field is a list of answer, each a answer have 2 fields: answer, is_true.
 
      """),
