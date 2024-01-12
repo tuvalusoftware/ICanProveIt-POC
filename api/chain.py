@@ -22,6 +22,7 @@ title_prompt = ChatPromptTemplate.from_messages([
      Provide a title that is a summary of the document.
      The title should be a title, not a question.
      The title should be in the same language as the document.
+     The output should be a single line of title.
      """),
     ('user', '"""{context}"""')
 ])
@@ -34,13 +35,7 @@ chapter_prompt = ChatPromptTemplate.from_messages([
      The chapter should be a title, not a question.
      The chapter should be in the same language as the document.
      The question and answer should be in same language as the chapter.
-     The output have multiple lines of chapter, format:
-     order. Title -- first page -- last page (page start from 1, page is index of document)
-
-     Example:
-     1. Chapter 1 -- 1 -- 10
-     2. Chapter 2 -- 11 -- 20
-     3. Chapter 3 -- 21 -- 30
+     The output is a list json format, each chapter have 3 fields: title, first_page, last_page.
      """),
     ('user', '"""{context}"""')
 ])
@@ -52,30 +47,9 @@ question_prompt = ChatPromptTemplate.from_messages([
      You task is generate a list of question, answers and index of true answer for the chapter.
      The question should be a problem and can answerable by context.
      The question should be a multiple choice question.
-     The answer should be a list of answer have more than 2 answer, delimited by comma.
+     The output is a list json format, each question have 3 fields: question, answers, true_index.
+     Answers field is a list of answer, each a answer have 2 fields: answer, is_true.
 
-     The output have multiple lines of question and answer, format:
-     q: Question?
-     a: Answer 1, Answer 2, Answer 3, Answer 4
-     t: Index of true answer (index of answer, start from 0)
-
-     Example:
-     q: Content of question 1?
-     a: Answer 1, Answer 2, Answer 3
-     t: 1
-
-     q: Content of question 2?
-     a: Answer 1, Answer 2, Answer 3
-     t: 2
-
-     q: Content of question 3?
-     a: Answer 1, Answer 2, Answer 3
-     t: 0
-
-     Explanation:
-     Question 1: Answer 2 is the true answer
-     Question 2: Answer 3 is the true answer
-     Question 3: Answer 1 is the true answer
      """),
      ('user', '<title>{topic}</title>\n"""{context}"""')
 ])

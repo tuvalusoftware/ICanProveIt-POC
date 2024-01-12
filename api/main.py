@@ -1,4 +1,5 @@
 import time
+import json
 
 from fastapi import FastAPI, UploadFile, Depends, Response, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -80,18 +81,16 @@ async def generate_chapters(project_id: int, db: Session = Depends(get_db)):
     pages = PyPDFLoader(project.filepath).load_and_split()
 
     try:
-        chapters = chain.chapter_chain.invoke({'context': pages}).split('\n')
+        chapters = json.loads(chain.chapter_chain.invoke({'context': pages}))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-    for chapter in chapters:
-        chapter_splited = chapter.split('--')
-        if len(chapter_splited) != 3:
-            continue
+    print(chapters)
 
-        title = chapter_splited[0].strip()
-        first_page = chapter_splited[1].strip()
-        last_page = chapter_splited[2].strip()
+    for chapter in chapters:
+        title = chapter['title']
+        first_page = int(chapter['first_page'])
+        last_page = int(chapter['last_page'])
 
         chapter = schemas.ChapterCreate(title=title, first_page=int(first_page), last_page=int(last_page), project_id=project_id)
         curd.create_chapter(db, chapter)
@@ -110,23 +109,20 @@ async def generate_questions(chapter_id: int, db: Session = Depends(get_db)):
     pages = PyPDFLoader(project.filepath).load_and_split()
 
     try:
-        questions = chain.question_chain.invoke({'context': pages[chapter.first_page-1:chapter.last_page+1], 'topic': chapter.title}).split('\n')
+        questions = json.loads(chain.question_chain.invoke({'context': pages[chapter.first_page-1:chapter.last_page+1], 'topic': chapter.title}))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
     print(questions)
 
-    for i in range(0, len(questions), 4):
-        question = schemas.QuestionCreate(question=questions[i].replace('q:', '').strip(), chapter_id=chapter_id)
-        answers = questions[i+1].replace('a:', '').strip().split(',')
-        true_index = int(questions[i+2].replace('t:', '').strip())
+    for question in questions:
+        question_text = question['question']
+        created_question = curd.create_question(db, schemas.QuestionCreate(question=question_text, chapter_id=chapter_id))
 
-        created_question = curd.create_question(db, question)
-
-        print(answers)
-
-        for i, answer in enumerate(answers):
-            answer_db = schemas.AnswerCreate(answer=answer.strip(), question_id=created_question.id, is_true=i == true_index)
-            curd.create_answer(db, answer_db)
+        answers = question['answers']
+        for answer in answers:
+            answer_text = answer['answer']
+            is_true = bool(answer['is_true'])
+            curd.create_answer(db, schemas.AnswerCreate(answer=answer_text, question_id=created_question.id, is_true=is_true))
 
     return curd.get_chapter(db, chapter_id=chapter_id)
