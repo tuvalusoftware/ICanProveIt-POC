@@ -1,6 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { PlusCircleOutlined, RobotOutlined } from '@ant-design/icons';
+import { Viewer, Worker } from '@react-pdf-viewer/core';
+import '@react-pdf-viewer/core/lib/styles/index.css';
+import { defaultLayoutPlugin } from '@react-pdf-viewer/default-layout';
+import '@react-pdf-viewer/default-layout/lib/styles/index.css';
 import { Button, Col, List, Row, Table, Tooltip, Typography, message } from 'antd';
+import { useCallback, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useParams } from 'react-router-dom';
 import Loader from '../../../components/Loader';
@@ -8,9 +13,10 @@ import queryClient from '../../../queryClient';
 import chapterService from '../../../services/chapter.service';
 import projectService from '../../../services/project.service';
 import styles from './index.module.scss';
-import { useCallback, useState } from 'react';
 
 export default function ProjectPage() {
+	const defaultLayoutPluginInstance = defaultLayoutPlugin();
+
 	const { id } = useParams<{ id: string }>();
 	const [chapterLoading, setChapterLoading] = useState(0);
 	const [isGeneratingChapters, setIsGeneratingChapters] = useState(false);
@@ -75,7 +81,20 @@ export default function ProjectPage() {
 			{project && (
 				<Row>
 					<Col span={24} lg={12} style={{ padding: 10 }}>
-						<iframe src={projectService.getPdfUrl(project.id)} className={styles.iframe}></iframe>
+						<Worker workerUrl='https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.worker.min.js'>
+							<div className={styles.pdfWrapper}>
+								<Viewer
+									fileUrl={projectService.getPdfUrl(project.id)}
+									renderLoader={() => <Loader />}
+									plugins={[defaultLayoutPluginInstance]}
+									onDocumentAskPassword={() => {
+										// eslint-disable-next-line no-alert
+										const password = window.prompt('Password?');
+										return password;
+									}}
+								/>
+							</div>
+						</Worker>
 					</Col>
 
 					<Col span={24} lg={12} style={{ padding: 10 }}>

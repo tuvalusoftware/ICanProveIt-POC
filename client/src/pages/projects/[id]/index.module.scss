@@ -1,14 +1,12 @@
-.iframe {
-	width: 100%;
-	height: 80vh;
-	border: none;
-	position: sticky;
-	top: 10px;
-}
-
 .tableRow {
 	position: sticky;
 	top: 0;
 	background: #fff;
 	z-index: 1;
+}
+
+.pdfWrapper {
+	height: 90vh;
+	position: sticky;
+	top: 10px;
 }
