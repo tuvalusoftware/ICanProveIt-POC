@@ -45,8 +45,8 @@ async def create_project(file: UploadFile, db: Session = Depends(get_db)):
         texts.append(text)
 
     try:
-        # title = chain.title_chain.invoke({'context': texts[:5]}).strip()
-        title = "########################################################"
+        # title = "########################################################"
+        title = chain.title_chain.invoke({'context': texts[:5]}).strip()
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -70,7 +70,7 @@ async def create_project(file: UploadFile, db: Session = Depends(get_db)):
 
     # return curd.create_project(db, project)
 
-@app.get('/projects', tags=['Projects'], summary='Get all projects', response_model=list[schemas.ProjectBase])
+@app.get('/projects', tags=['Projects'], summary='Get all projects', response_model=list[schemas.Project])
 async def get_projects(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     return curd.get_projects(db, skip=skip, limit=limit)
 
@@ -158,3 +158,11 @@ async def get_question(question_id: int, db: Session = Depends(get_db)):
 async def delete_all_questions(db: Session = Depends(get_db)):
     db.query(models.Question).delete()
     db.commit()
+
+@app.get('/pages', tags=['Pages'], summary='Get all pages', response_model=list[schemas.Page])
+async def get_pages(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    return curd.get_all_pages(db, skip=skip, limit=limit)
+
+@app.get('/pages/{page_id}', tags=['Pages'], summary='Get a page', response_model=schemas.Page)
+async def get_page(page_id: int, db: Session = Depends(get_db)):
+    return curd.get_page(db, page_id=page_id)

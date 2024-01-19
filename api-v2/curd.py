@@ -26,6 +26,12 @@ def create_page(db: Session, page: schemas.PageCreate) -> schemas.Page:
     db.refresh(db_page)
     return db_page
 
+def get_all_pages(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.Page).offset(skip).limit(limit).all()
+
+def get_page(db: Session, page_id: int) -> schemas.Page:
+    return db.query(models.Page).filter(models.Page.id == page_id).first()
+
 def create_question(db: Session, question: schemas.QuestionCreate) -> schemas.Question:
     db_question = models.Question(**question.dict())
     db.add(db_question)

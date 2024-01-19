@@ -62,7 +62,6 @@ async def get_docs_string(project_id: int, db: Session = Depends(get_db)) -> str
     docs = PyPDFLoader(project.filepath).load()
     return helpers.pretty_docs(docs)
 
-
 @app.delete('/projects', tags=['Projects'], summary='Delete all projects')
 async def delete_all_projects(db: Session = Depends(get_db)):
     return curd.delete_all_projects(db)
