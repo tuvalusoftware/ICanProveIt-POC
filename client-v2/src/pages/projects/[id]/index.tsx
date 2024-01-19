@@ -24,7 +24,9 @@ export default function ProjectPage() {
 		data: project,
 		isLoading: isLoadingProject,
 		refetch: refetchProject,
-	} = useQuery(['project', id], () => projectService.getProject(+id!));
+	} = useQuery(['project', id], () => projectService.getProject(+id!), {
+		refetchInterval: 2_000,
+	});
 
 	const { data: questions, isLoading: isLoadingQuestions } = useQuery(
 		[
@@ -34,6 +36,9 @@ export default function ProjectPage() {
 			},
 		],
 		() => questionService.getQuestionsByProjectId(+id!),
+		{
+			refetchInterval: project?.generating ? 2_000 : false,
+		},
 	);
 
 	const handleGenerateQuestions = async () => {
@@ -63,6 +68,7 @@ export default function ProjectPage() {
 						<Worker workerUrl='https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.worker.min.js'>
 							<div className={styles.pdfWrapper}>
 								<Viewer
+									key={project.id}
 									fileUrl={projectService.getPdfUrl(project.id)}
 									renderLoader={() => <Loader />}
 									plugins={[defaultLayoutPluginInstance]}

@@ -43,12 +43,20 @@ async def create_project(file: UploadFile, db: Session = Depends(get_db)):
     with open(filename, 'wb') as f:
         f.write(file.file.read())
 
-    images = convert_from_path(filename, 500)
+    print(f'Uploaded file: {filename}')
+
+    print('Converting PDF to images...')
+    images = convert_from_path(filename, 200)
+    print(f'Converted PDF to images, {len(images)} images')
+
     texts = []
 
-    for img in images:
+    for i, img in enumerate(images):
+        print(f'[{i+1}] Converting image to text...')
         text = helpers.image_to_text(img)
         texts.append(text)
+
+    print('Converted images to text, {len(texts)} texts')
 
     try:
         title = "Dev title"
@@ -175,7 +183,11 @@ def generate_questions_for_page(page: schemas.Page, db: Session):
 
         end = time.time()
 
-        time.sleep(20 - end + start) # 20 - (end - start)
+        if PRODUCT_ENV:
+            time.sleep(20 - end + start) # 20 - (end - start)
+        else:
+            time.sleep(1)
+
     except Exception as e:
         print(f'Generate question error: {e}')
     finally:
