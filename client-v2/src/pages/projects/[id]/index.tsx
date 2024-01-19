@@ -125,7 +125,7 @@ export default function ProjectPage() {
 										<Tabs
 											tabBarStyle={{
 												position: 'sticky',
-												top: 64,
+												top: 76,
 												zIndex: 10,
 												background: '#fff',
 											}}
