@@ -5,6 +5,7 @@ import { Question } from './Question';
 export type Project = Base & {
 	title: string;
 	filepath: string;
+	generating: boolean;
 
 	pages: Page[];
 	questions: Question[];

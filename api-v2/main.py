@@ -1,13 +1,19 @@
 import time
 import json
+import os
 
-from fastapi import FastAPI, UploadFile, Depends, Response, HTTPException
+import models, curd, schemas, chain, helpers
+
+from fastapi import FastAPI, UploadFile, Depends, Response, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from pdf2image import convert_from_path
-
-import models, curd, schemas, chain, helpers
+from dotenv import load_dotenv
 from database import engine, SessionLocal
+
+load_dotenv()
+
+PRODUCT_ENV = os.getenv('PRODUCT_ENV', 'false') == 'true'
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -45,8 +51,10 @@ async def create_project(file: UploadFile, db: Session = Depends(get_db)):
         texts.append(text)
 
     try:
-        # title = "########################################################"
-        title = chain.title_chain.invoke({'context': texts[:5]}).strip()
+        title = "Dev title"
+        if PRODUCT_ENV:
+            title = chain.title_chain.invoke({'context': texts[:5]}).strip()
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -97,43 +105,89 @@ async def get_pdf(project_id: int, db: Session = Depends(get_db)):
         return Response(content=f.read(), media_type='application/pdf')
 
 
+def generate_questions_for_page(page: schemas.Page, db: Session):
+
+    try:
+        db.query(models.Project).filter(models.Project.id == page.project_id).update({'generating': True})
+        db.commit()
+
+        questions_text = """
+            [
+                {
+                    "level": "easy",
+                    "question": "What is the capital of Vietnam?",
+                    "answers": [
+                        {
+                            "answer": "Hanoi",
+                            "is_true": true
+                        },
+                        {
+                            "answer": "Ho Chi Minh",
+                            "is_true": false
+                        }
+                    ]
+                },
+                {
+                    "level": "medium",
+                    "question": "What is the capital of Vietnam?",
+                    "answers": [
+                        {
+                            "answer": "Hanoi",
+                            "is_true": true
+                        },
+                        {
+                            "answer": "Ho Chi Minh",
+                            "is_true": false
+                        }
+                    ]
+                },
+                {
+                    "level": "hard",
+                    "question": "What is the capital of Vietnam?",
+                    "answers": [
+                        {
+                            "answer": "Hanoi",
+                            "is_true": true
+                        },
+                        {
+                            "answer": "Ho Chi Minh",
+                            "is_true": false
+                        }
+                    ]
+                }
+            ]
+        """
+
+        if PRODUCT_ENV: # TODO: Do not call API in development mode
+            questions_text = chain.question_chain.invoke({'context': page.content})
+
+        print(f'Generate question for page {page.id}: {questions_text}')
+
+        start = time.time()
+
+        questions_json = json.loads(questions_text)
+
+        for question in questions_json:
+            created_question = curd.create_question(db, schemas.QuestionCreate(level=question['level'], question=question['question'], project_id=page.project_id, page_id=page.id))
+
+            for answer in question['answers']: # type: ignore
+                curd.create_answer(db, schemas.AnswerCreate(answer=answer['answer'], is_true=answer['is_true'], question_id=created_question.id)) # type: ignore
+
+        end = time.time()
+
+        time.sleep(20 - end + start) # 20 - (end - start)
+    except Exception as e:
+        print(f'Generate question error: {e}')
+    finally:
+        db.query(models.Project).filter(models.Project.id == page.project_id).update({'generating': False})
+        db.commit()
+
 @app.post('/questions', tags=['Questions'], summary='Generate list of questions for a project', response_model=list[schemas.Question])
-async def generate_questions(project_id: int, db: Session = Depends(get_db)):
+async def generate_questions(project_id: int, bg_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     project = curd.get_project(db, project_id=project_id)
 
     for page in project.pages:
-        try:
-            questions_text = chain.question_chain.invoke({'context': page.content})
-
-            print(questions_text)
-
-            start = time.time()
-
-            questions_json = json.loads(questions_text)
-
-            for question in questions_json:
-                created_question = curd.create_question(db, schemas.QuestionCreate(level=question['level'], question=question['question'], project_id=project_id, page_id=page.id))
-
-                for answer in question['answers']: # type: ignore
-                    curd.create_answer(db, schemas.AnswerCreate(answer=answer['answer'], is_true=answer['is_true'], question_id=created_question.id)) # type: ignore
-
-            end = time.time()
-
-            time.sleep(20 - end + start) # 20 - (end - start)
-        except Exception as e:
-            print(f'Error: {e}')
-
-    # for i in range(10):
-    #     q = schemas.QuestionCreate(level='hard', question=f'Question {i + 1}', project_id=project_id, page_id=i+1)
-    #     created_question = curd.create_question(db, q)
-
-    #     answers = []
-
-    #     for j in range(4):
-    #         a = schemas.AnswerCreate(answer=f'Answer {i + 1}.{j + 1}', question_id=created_question.id)
-    #         answers.append(curd.create_answer(db, a))
-
-    #     questions.append(created_question)
+        bg_tasks.add_task(generate_questions_for_page, page, db)
 
     return db.query(models.Question).where(models.Question.project_id == project_id).all()
 

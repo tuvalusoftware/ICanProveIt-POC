@@ -4,12 +4,13 @@ import { Viewer, Worker } from '@react-pdf-viewer/core';
 import '@react-pdf-viewer/core/lib/styles/index.css';
 import { defaultLayoutPlugin } from '@react-pdf-viewer/default-layout';
 import '@react-pdf-viewer/default-layout/lib/styles/index.css';
-import { Button, Col, Empty, Row, Tabs, Typography } from 'antd';
-import { useMemo } from 'react';
+import { Button, Col, Empty, Row, Tabs, Typography, message } from 'antd';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useParams } from 'react-router-dom';
 import Loader from '../../../components/Loader';
 import QuestionCard from '../../../components/QuestionCard';
+import queryClient from '../../../queryClient';
 import projectService from '../../../services/project.service';
 import questionService from '../../../services/question.service';
 import styles from './index.module.scss';
@@ -18,6 +19,7 @@ export default function ProjectPage() {
 	const defaultLayoutPluginInstance = defaultLayoutPlugin();
 
 	const { id } = useParams<{ id: string }>();
+	const [isRequesting, setIsRequesting] = useState(false);
 
 	const { data: project, isLoading: isLoadingProject } = useQuery(['project', id], () =>
 		projectService.getProject(+id!),
@@ -27,15 +29,56 @@ export default function ProjectPage() {
 		[
 			'questions',
 			{
-				projectId: id,
+				projectId: +id!,
 			},
 		],
 		() => questionService.getQuestionsByProjectId(+id!),
 	);
 
+	const handleGenerateQuestions = async () => {
+		try {
+			setIsRequesting(true);
+			await questionService.generateQuestions(+id!);
+			message.success('Questions is generating');
+		} catch (error: any) {
+			message.error(error.message);
+		} finally {
+			setIsRequesting(false);
+		}
+	};
+
 	const easyQuestions = useMemo(() => questions?.filter((q) => q.level === 'easy') || [], [questions]);
 	const mediumQuestions = useMemo(() => questions?.filter((q) => q.level === 'medium') || [], [questions]);
 	const hardQuestions = useMemo(() => questions?.filter((q) => q.level === 'hard') || [], [questions]);
+
+	useEffect(() => {
+		if (!project) return;
+
+		queryClient.setQueryDefaults(
+			[
+				'questions',
+				{
+					projectId: project.id,
+				},
+			],
+			{
+				refetchInterval: project.generating ? 2_000 : false,
+			},
+		);
+
+		return () =>
+			queryClient.setQueryDefaults(
+				[
+					'questions',
+					{
+						projectId: project.id,
+					},
+				],
+				{
+					refetchInterval: false,
+				},
+			);
+	}, [project]);
 
 	return (
 		<div className={styles.wrapper}>
@@ -69,7 +112,11 @@ export default function ProjectPage() {
 							<>
 								{!questions.length ? (
 									<Empty>
-										<Button type='primary' icon={<QuestionCircleOutlined />}>
+										<Button
+											type='primary'
+											icon={<QuestionCircleOutlined />}
+											onClick={handleGenerateQuestions}
+										>
 											Generate questions
 										</Button>
 									</Empty>
@@ -134,6 +181,19 @@ export default function ProjectPage() {
 									</>
 								)}
 							</>
+						)}
+
+						{project.generating ? (
+							<Loader message='Generating question' />
+						) : (
+							<Button
+								loading={isRequesting}
+								type='primary'
+								icon={<QuestionCircleOutlined />}
+								onClick={handleGenerateQuestions}
+							>
+								Generate more
+							</Button>
 						)}
 					</Col>
 				</Row>

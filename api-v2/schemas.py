@@ -56,6 +56,7 @@ class ProjectCreate(ProjectBase):
 class Project(ProjectBase):
     id: int
     questions: list[Question] = []
+    generating: bool = False
     pages: list[Page] = []
 
     class Config:
