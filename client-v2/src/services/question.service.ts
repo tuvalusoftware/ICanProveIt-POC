@@ -1,16 +1,12 @@
-import { AxiosInstance } from 'axios';
 import { Question } from '../models/Question';
-import createClient from '../utils/createClient';
+import BaseService from './base.service';
 
 /**
  * QuestionService is a class for making HTTP requests to the questions resource
  */
-class QuestionService {
-	private readonly resource: string = 'questions';
-	private readonly client: AxiosInstance;
-
+class QuestionService extends BaseService {
 	constructor() {
-		this.client = createClient(this.resource); // createClient('questions')
+		super('questions');
 	}
 
 	/**
