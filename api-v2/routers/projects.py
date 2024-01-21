@@ -7,7 +7,7 @@ from PIL.Image import Image
 from langchain.docstore.document import Document
 
 from dependencies import get_db
-import schemas, curd, helpers
+import schemas, helpers
 import time
 import chain
 import models
@@ -94,26 +94,33 @@ async def create_project(file: UploadFile, bg_tasks: BackgroundTasks, use_ocr = 
 
 @router.get('', tags=['Projects'], summary='Get all projects', response_model=list[schemas.Project])
 async def get_projects(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    return curd.get_projects(db, skip=skip, limit=limit)
+    return db.query(models.Project).offset(skip).limit(limit).all()
 
 @router.get('/{project_id}', tags=['Projects'], summary='Get a project', response_model=schemas.Project)
 async def get_project(project_id: int, db: Session = Depends(get_db)):
-    return curd.get_project(db, project_id=project_id)
+    return db.query(models.Project).filter(models.Project.id == project_id).first()
 
 @router.get('/{project_id}/text', tags=['Projects'], summary='Get document text')
 async def get_docs_string(project_id: int, db: Session = Depends(get_db)) -> str:
-    project = curd.get_project(db, project_id=project_id)
+    project = db.query(models.Project).filter(models.Project.id == project_id).first()
+
+    if not project:
+        raise HTTPException(status_code=404, detail='Project not found')
+
     texts = "\n".join(map(lambda page: str(page.content), project.pages))
     return texts
 
 
 @router.delete('', tags=['Projects'], summary='Delete all projects')
 async def delete_all_projects(db: Session = Depends(get_db)):
-    return curd.delete_all_projects(db)
+    return db.query(models.Project).delete()
 
 @router.get('/{project_id}/pdf', tags=['Projects'], summary='Get pdf of a project')
 async def get_pdf(project_id: int, db: Session = Depends(get_db)):
-    project = curd.get_project(db, project_id=project_id)
+    project = db.query(models.Project).filter(models.Project.id == project_id).first()
 
-    with open(project.filepath, 'rb') as f:
+    if not project:
+        raise HTTPException(status_code=404, detail='Project not found')
+
+    with open(str(project.filepath), 'rb') as f:
         return Response(content=f.read(), media_type='application/pdf')
