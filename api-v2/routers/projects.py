@@ -118,6 +118,14 @@ async def delete_project_by_id(project_id, db: Session = Depends(get_db)):
     if not project:
         raise HTTPException(status_code=404, detail='Project not found')
 
+    questions = db.query(models.Question).filter(models.Question.project_id == project_id).all()
+
+    for question in questions:
+        db.query(models.Answer).filter(models.Answer.question_id == question.id).delete()
+
+    db.query(models.Question).filter(models.Question.project_id == project_id).delete() # Delete all questions of project
+    db.query(models.Page).filter(models.Page.project_id == project_id).delete() # Delete all pages of project
+
     db.query(models.Project).filter(models.Project.id == project_id).delete()
     db.commit()
     return Response(status_code=204)
