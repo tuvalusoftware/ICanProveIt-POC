@@ -1,18 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { FileOutlined, QuestionCircleOutlined } from '@ant-design/icons';
+import { QuestionCircleOutlined } from '@ant-design/icons';
 import { Viewer, Worker } from '@react-pdf-viewer/core';
 import '@react-pdf-viewer/core/lib/styles/index.css';
 import { defaultLayoutPlugin } from '@react-pdf-viewer/default-layout';
 import '@react-pdf-viewer/default-layout/lib/styles/index.css';
-import { Button, Col, Empty, Row, Tabs, Typography, message } from 'antd';
+import { Button, Col, Empty, Row, Select, Space, Typography, message } from 'antd';
 import { useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useParams } from 'react-router-dom';
 import Loader from '../../../components/Loader';
-import QuestionCard from '../../../components/QuestionCard';
 import projectService from '../../../services/project.service';
 import questionService from '../../../services/question.service';
 import styles from './index.module.scss';
+import QuestionCard from '../../../components/QuestionCard';
+
+type FilterType = 'all' | 'easy' | 'medium' | 'hard';
 
 export default function ProjectPage() {
 	const defaultLayoutPluginInstance = defaultLayoutPlugin();
@@ -43,9 +45,13 @@ export default function ProjectPage() {
 		}
 	};
 
-	const easyQuestions = useMemo(() => questions?.filter((q) => q.level === 'easy') || [], [questions]);
-	const mediumQuestions = useMemo(() => questions?.filter((q) => q.level === 'medium') || [], [questions]);
-	const hardQuestions = useMemo(() => questions?.filter((q) => q.level === 'hard') || [], [questions]);
+	const [filter, setFilter] = useState<FilterType>('all');
+
+	const filteredQuestions = useMemo(() => {
+		if (!questions) return [];
+		if (filter === 'all') return questions;
+		return questions.filter((question) => question.level === filter);
+	}, [filter, questions]);
 
 	return (
 		<div className={styles.wrapper}>
@@ -84,69 +90,26 @@ export default function ProjectPage() {
 											type='primary'
 											icon={<QuestionCircleOutlined />}
 											onClick={handleGenerateQuestions}
+											disabled={project.in_ocr_process}
 										>
-											Generate questions
+											{project.in_ocr_process
+												? 'Document is in OCR process'
+												: 'Generate questions'}
 										</Button>
 									</Empty>
 								) : (
-									<>
-										<Tabs
-											tabBarStyle={{
-												position: 'sticky',
-												top: 76,
-												zIndex: 10,
-												background: '#fff',
-											}}
-											type='card'
-											items={[
-												{
-													label: 'All',
-													key: 'all',
-													children: questions ? (
-														questions.map((question) => (
-															<QuestionCard key={question.id} question={question} />
-														))
-													) : (
-														<Empty />
-													),
-													icon: <FileOutlined />,
-												},
-												{
-													label: 'Easy',
-													key: 'easy',
-													children: easyQuestions.length ? (
-														easyQuestions.map((question) => (
-															<QuestionCard key={question.id} question={question} />
-														))
-													) : (
-														<Empty />
-													),
-												},
-												{
-													label: 'Medium',
-													key: 'medium',
-													children: mediumQuestions.length ? (
-														mediumQuestions.map((question) => (
-															<QuestionCard key={question.id} question={question} />
-														))
-													) : (
-														<Empty />
-													),
-												},
-												{
-													label: 'Hard',
-													key: 'hard',
-													children: hardQuestions.length ? (
-														hardQuestions.map((question) => (
-															<QuestionCard key={question.id} question={question} />
-														))
-													) : (
-														<Empty />
-													),
-												},
-											]}
-										/>
-									</>
+									<Space direction='vertical' style={{ width: '100%' }}>
+										<Select<FilterType> value={filter} style={{ width: 200 }} onSelect={setFilter}>
+											<Select.Option key='all'>All</Select.Option>
+											<Select.Option key='easy'>Easy</Select.Option>
+											<Select.Option key='medium'>Medium</Select.Option>
+											<Select.Option key='hard'>Hard</Select.Option>
+										</Select>
+
+										{filteredQuestions.map((question) => (
+											<QuestionCard question={question} key={question.id} />
+										))}
+									</Space>
 								)}
 							</>
 						)}
@@ -158,9 +121,10 @@ export default function ProjectPage() {
 								loading={isRequesting}
 								type='primary'
 								icon={<QuestionCircleOutlined />}
+								disabled={project.in_ocr_process}
 								onClick={handleGenerateQuestions}
 							>
-								Generate more
+								{project.in_ocr_process ? 'Document is in OCR process' : 'Generate more'}
 							</Button>
 						) : (
 							<></>

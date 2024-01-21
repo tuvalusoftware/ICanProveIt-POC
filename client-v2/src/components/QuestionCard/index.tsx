@@ -44,7 +44,7 @@ export default function QuestionCard({ question }: QuestionCardProps) {
 
 				<div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
 					{question.answers.map((answer) => (
-						<Checkbox disabled key={answer.id} checked={answer.is_true}>
+						<Checkbox key={answer.id} checked={answer.is_true}>
 							{answer.answer}
 						</Checkbox>
 					))}
@@ -53,6 +53,8 @@ export default function QuestionCard({ question }: QuestionCardProps) {
 
 			<Modal
 				open={isOpenContext}
+				width={800}
+				destroyOnClose
 				title={`Context of ${question.question}`}
 				onCancel={() => setIsOpenContext(false)}
 				okButtonProps={{ hidden: true }}
