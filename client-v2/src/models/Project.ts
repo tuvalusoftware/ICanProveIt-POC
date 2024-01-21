@@ -5,7 +5,8 @@ import { Question } from './Question';
 export type Project = Base & {
 	title: string;
 	filepath: string;
-	generating: boolean;
+	in_ocr_process: boolean;
+	in_question_process: boolean;
 
 	pages: Page[];
 	questions: Question[];

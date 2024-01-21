@@ -24,21 +24,10 @@ export default function ProjectPage() {
 		data: project,
 		isLoading: isLoadingProject,
 		refetch: refetchProject,
-	} = useQuery(['project', id], () => projectService.getProject(+id!), {
-		refetchInterval: 2_000,
-	});
+	} = useQuery(['project', id], () => projectService.getProject(+id!));
 
-	const { data: questions, isLoading: isLoadingQuestions } = useQuery(
-		[
-			'questions',
-			{
-				projectId: +id!,
-			},
-		],
-		() => questionService.getQuestionsByProjectId(+id!),
-		{
-			refetchInterval: project?.generating ? 2_000 : false,
-		},
+	const { data: questions, isLoading: isLoadingQuestions } = useQuery(['questions', { projectId: +id! }], () =>
+		questionService.getQuestionsByProjectId(+id!),
 	);
 
 	const handleGenerateQuestions = async () => {
@@ -162,9 +151,9 @@ export default function ProjectPage() {
 							</>
 						)}
 
-						{project.generating && <Loader message='Generating question' />}
+						{project.in_question_process && <Loader message='Generating question' />}
 
-						{questions?.length && !project.generating ? (
+						{questions?.length && !project.in_question_process ? (
 							<Button
 								loading={isRequesting}
 								type='primary'

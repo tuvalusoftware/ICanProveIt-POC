@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+import datetime
 
 class AnswerBase(BaseModel):
     answer: str
@@ -10,6 +11,9 @@ class AnswerCreate(AnswerBase):
 class Answer(AnswerBase):
     id: int
     question_id: int
+
+    created_at: datetime.datetime
+    updated_at: datetime.datetime
 
     class Config:
         from_attributes = True
@@ -28,6 +32,9 @@ class Question(QuestionBase):
     page_id: int
     answers: list[Answer] = []
 
+    created_at: datetime.datetime
+    updated_at: datetime.datetime
+
     class Config:
         from_attributes = True
 
@@ -42,6 +49,9 @@ class Page(PageBase):
     id: int
     project_id: int
     questions: list[Question] = []
+
+    created_at: datetime.datetime
+    updated_at: datetime.datetime
 
     class Config:
         from_attributes = True
@@ -59,6 +69,9 @@ class Project(ProjectBase):
     in_ocr_process: bool = False
     in_question_process: bool = False
     pages: list[Page] = []
+
+    created_at: datetime.datetime
+    updated_at: datetime.datetime
 
     class Config:
         from_attributes = True

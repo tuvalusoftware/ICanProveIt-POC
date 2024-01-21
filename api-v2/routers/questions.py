@@ -29,12 +29,12 @@ def gen_questions_task(page: schemas.Page, db: Session):
         questions_json = json.loads(questions_text)
 
         for question in questions_json:
-            question = models.Question(level=question['level'], question=question['question'], project_id=page.project_id, page_id=page.id)
-            db.add(question)
+            created_question = models.Question(level=question['level'], question=question['question'], project_id=page.project_id, page_id=page.id)
+            db.add(created_question)
             db.commit()
 
-            for answer in question['answers']: # type: ignore
-                db.add(models.Answer(answer=answer['answer'], is_true=answer['is_true'], question_id=question.id))
+            for answer in question['answers']:
+                db.add(models.Answer(answer=answer['answer'], is_true=answer['is_true'], question_id=created_question.id))
                 db.commit()
 
         end = time.time()
@@ -55,7 +55,7 @@ def update_question_status_task(project_id: int, status: bool, db: Session):
     db.query(models.Project).filter(models.Project.id == project_id).update({'in_question_process': status})
     db.commit()
 
-@router.post('', tags=['Questions'], summary='Generate list of questions for a project', response_model=list[schemas.Question])
+@router.post('', summary='Generate list of questions for a project', response_model=list[schemas.Question])
 async def generate_questions(project_id: int, bg_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     project = db.query(models.Project).filter(models.Project.id == project_id).first()
 
@@ -75,7 +75,7 @@ async def generate_questions(project_id: int, bg_tasks: BackgroundTasks, db: Ses
 
     return db.query(models.Question).where(models.Question.project_id == project_id).all()
 
-@router.get('', tags=['Questions'], summary='Get all questions', response_model=list[schemas.Question])
+@router.get('', summary='Get all questions', response_model=list[schemas.Question])
 async def get_questions(skip: int = 0, limit: int = 100, project_id=None, db: Session = Depends(get_db)):
     query = db.query(models.Question)
 
@@ -88,11 +88,11 @@ async def get_questions(skip: int = 0, limit: int = 100, project_id=None, db: Se
 
     return query.all()
 
-@router.get('/{question_id}', tags=['Questions'], summary='Get a question', response_model=schemas.Question)
+@router.get('/{question_id}', summary='Get a question', response_model=schemas.Question)
 async def get_question(question_id: int, db: Session = Depends(get_db)):
     return db.query(models.Question).filter(models.Question.id == question_id).first()
 
-@router.delete('', tags=['Questions'], summary='Delete all questions')
+@router.delete('', summary='Delete all questions')
 async def delete_all_questions(db: Session = Depends(get_db)):
     db.query(models.Question).delete()
     db.commit()

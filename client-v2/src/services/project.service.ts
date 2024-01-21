@@ -9,13 +9,16 @@ class ProjectService {
 		this.client = createClient('projects');
 	}
 
-	async createProject(file: File) {
+	async createProject(file: File, useOcr: boolean = false) {
 		const formData = new FormData();
 		formData.append('file', file);
 
 		return (await this.client.post('/', formData, {
 			headers: {
 				'Content-Type': 'multipart/form-data',
+			},
+			params: {
+				use_ocr: useOcr,
 			},
 		})) as Project;
 	}
@@ -30,6 +33,10 @@ class ProjectService {
 
 	async generateChapters(id: number) {
 		return (await this.client.post(`/${id}/chapters/generate`)) as Project;
+	}
+
+	async deleteProject(id: number): Promise<void> {
+		return await this.client.delete(`/${id}`);
 	}
 
 	getPdfUrl(id: number) {

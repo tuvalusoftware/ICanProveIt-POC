@@ -1,5 +1,6 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Text, DateTime
 from sqlalchemy.orm import relationship
+import datetime
 
 from database import Base
 
@@ -12,8 +13,11 @@ class Project(Base):
     in_ocr_process = Column(Boolean, nullable=False, default=False)
     in_question_process = Column(Boolean, nullable=False, default=False)
 
-    questions = relationship("Question", back_populates="project")
-    pages = relationship("Page", back_populates="project")
+    questions = relationship("Question", back_populates="project", cascade="all, delete")
+    pages = relationship("Page", back_populates="project", cascade="all, delete")
+
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
 
 class Page(Base):
     __tablename__ = "pages"
@@ -24,8 +28,11 @@ class Page(Base):
 
     project_id = Column(Integer, ForeignKey("projects.id"))
 
-    project = relationship("Project", back_populates="pages")
-    questions = relationship("Question", back_populates="page")
+    project = relationship("Project", back_populates="pages", cascade="all, delete")
+    questions = relationship("Question", back_populates="page", cascade="all, delete")
+
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
 
 class Question(Base):
     __tablename__ = "questions"
@@ -37,9 +44,12 @@ class Question(Base):
     project_id = Column(Integer, ForeignKey("projects.id"))
     page_id = Column(Integer, ForeignKey("pages.id"))
 
-    project = relationship("Project", back_populates="questions")
-    page = relationship("Page", back_populates="questions")
-    answers = relationship("Answer", back_populates="question")
+    project = relationship("Project", back_populates="questions", cascade="all, delete")
+    page = relationship("Page", back_populates="questions", cascade="all, delete")
+    answers = relationship("Answer", back_populates="question", cascade="all, delete")
+
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
 
 class Answer(Base):
     __tablename__ = "answers"
@@ -50,4 +60,7 @@ class Answer(Base):
 
     question_id = Column(Integer, ForeignKey("questions.id"))
 
-    question = relationship("Question", back_populates="answers")
+    question = relationship("Question", back_populates="answers", cascade="all, delete")
+
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)

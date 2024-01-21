@@ -49,7 +49,7 @@ def update_title_task(project_id: int, db: Session):
     db.query(models.Project).filter(models.Project.id == project_id).update({'title': title})
     db.commit()
 
-@router.post('', tags=['Projects'], summary='Create a new project', response_model=schemas.Project)
+@router.post('', summary='Create a new project', response_model=schemas.Project)
 async def create_project(file: UploadFile, bg_tasks: BackgroundTasks, use_ocr = False, db: Session = Depends(get_db)):
     if file.content_type not in ['application/pdf']:
         raise HTTPException(status_code=400, detail='Only PDF file is supported')
@@ -92,15 +92,15 @@ async def create_project(file: UploadFile, bg_tasks: BackgroundTasks, use_ocr = 
 
     return project
 
-@router.get('', tags=['Projects'], summary='Get all projects', response_model=list[schemas.Project])
+@router.get('', summary='Get all projects', response_model=list[schemas.Project])
 async def get_projects(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     return db.query(models.Project).offset(skip).limit(limit).all()
 
-@router.get('/{project_id}', tags=['Projects'], summary='Get a project', response_model=schemas.Project)
+@router.get('/{project_id}', summary='Get a project', response_model=schemas.Project)
 async def get_project(project_id: int, db: Session = Depends(get_db)):
     return db.query(models.Project).filter(models.Project.id == project_id).first()
 
-@router.get('/{project_id}/text', tags=['Projects'], summary='Get document text')
+@router.get('/{project_id}/text', summary='Get document text')
 async def get_docs_string(project_id: int, db: Session = Depends(get_db)) -> str:
     project = db.query(models.Project).filter(models.Project.id == project_id).first()
 
@@ -111,11 +111,19 @@ async def get_docs_string(project_id: int, db: Session = Depends(get_db)) -> str
     return texts
 
 
-@router.delete('', tags=['Projects'], summary='Delete all projects')
-async def delete_all_projects(db: Session = Depends(get_db)):
-    return db.query(models.Project).delete()
+@router.delete('/{project_id}', summary='Delete a project')
+async def delete_project_by_id(project_id, db: Session = Depends(get_db)):
+    project = db.query(models.Project).filter(models.Project.id == project_id).first()
 
-@router.get('/{project_id}/pdf', tags=['Projects'], summary='Get pdf of a project')
+    if not project:
+        raise HTTPException(status_code=404, detail='Project not found')
+
+    db.query(models.Project).filter(models.Project.id == project_id).delete()
+    db.commit()
+    return Response(status_code=204)
+
+
+@router.get('/{project_id}/pdf', summary='Get pdf of a project')
 async def get_pdf(project_id: int, db: Session = Depends(get_db)):
     project = db.query(models.Project).filter(models.Project.id == project_id).first()
 
