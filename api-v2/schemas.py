@@ -56,7 +56,8 @@ class ProjectCreate(ProjectBase):
 class Project(ProjectBase):
     id: int
     questions: list[Question] = []
-    generating: bool = False
+    in_ocr_process: bool = False
+    in_question_process: bool = False
     pages: list[Page] = []
 
     class Config:

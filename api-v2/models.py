@@ -9,7 +9,8 @@ class Project(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False)
     filepath = Column(String, nullable=False, unique=True)
-    generating = Column(Boolean, nullable=False, default=False)
+    in_ocr_process = Column(Boolean, nullable=False, default=False)
+    in_question_process = Column(Boolean, nullable=False, default=False)
 
     questions = relationship("Question", back_populates="project")
     pages = relationship("Page", back_populates="project")
