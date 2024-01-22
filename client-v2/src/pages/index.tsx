@@ -7,16 +7,17 @@ import {
 	FolderOpenFilled,
 	PictureOutlined,
 	QuestionCircleOutlined,
+	ReloadOutlined,
 } from '@ant-design/icons';
-import { Alert, Button, Checkbox, List, Modal, Popconfirm, Space, Spin, Tag, message } from 'antd';
+import { Alert, Button, Checkbox, List, Modal, Popconfirm, Space, Spin, Tag, Tooltip, message } from 'antd';
 import dayjs from 'dayjs';
 import { useRef, useState } from 'react';
 import { useQuery } from 'react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import Loader from '../components/Loader';
+import queryClient from '../queryClient';
 import projectService from '../services/project.service';
 import styles from './index.module.scss';
-import queryClient from '../queryClient';
 
 export default function HomePage() {
 	const inputRef = useRef<HTMLInputElement>(null);
@@ -24,7 +25,16 @@ export default function HomePage() {
 	const [selectedFile, setSelectedFile] = useState<File | null>(null);
 	const [performOcr, setPerformOcr] = useState(false);
 
-	const { data: projects, isLoading } = useQuery(['projects'], () => projectService.getProjects());
+	const {
+		data: projects,
+		isLoading,
+		isRefetching: isProjectsRefetching,
+		refetch: refetchProjects,
+	} = useQuery(['projects'], () => projectService.getProjects(), {
+		onError(error: Error) {
+			message.error(error.message);
+		},
+	});
 
 	const navigate = useNavigate();
 
@@ -53,25 +63,34 @@ export default function HomePage() {
 	return (
 		<div className={styles.wrapper}>
 			<div className={styles.toolbar}>
-				<Button
-					type='primary'
-					icon={<CloudUploadOutlined />}
-					loading={isCreating}
-					onClick={() => inputRef.current?.click()}
-				>
-					Upload document
-					<input
-						type='file'
-						accept='application/pdf'
-						hidden
-						ref={inputRef}
-						onChange={(event) => {
-							const file = event.target.files?.[0];
-							if (!file) return message.info('No file selected');
-							setSelectedFile(file);
-						}}
-					/>
-				</Button>
+				<Space>
+					<Tooltip title='Refresh'>
+						<Button
+							icon={<ReloadOutlined />}
+							loading={isProjectsRefetching}
+							onClick={() => refetchProjects()}
+						/>
+					</Tooltip>
+					<Button
+						type='primary'
+						icon={<CloudUploadOutlined />}
+						loading={isCreating}
+						onClick={() => inputRef.current?.click()}
+					>
+						Upload document
+						<input
+							type='file'
+							accept='application/pdf'
+							hidden
+							ref={inputRef}
+							onChange={(event) => {
+								const file = event.target.files?.[0];
+								if (!file) return message.info('No file selected');
+								setSelectedFile(file);
+							}}
+						/>
+					</Button>
+				</Space>
 			</div>
 
 			{isLoading ? (
@@ -161,17 +180,26 @@ export default function HomePage() {
 				}}
 				title='Upload document'
 			>
-				<Checkbox checked={performOcr} onChange={(e) => setPerformOcr(e.target.checked)}>
-					Perform OCR
-				</Checkbox>
-				<Alert
-					type='warning'
-					message={
-						<p>
-							<b>Warning:</b> OCR processing can take a long time depending on the size of the document.
-						</p>
-					}
-				/>
+				<Space direction='vertical' size='middle'>
+					<Alert
+						icon={<FileOutlined />}
+						showIcon
+						message={selectedFile?.name}
+						description={dayjs(selectedFile?.lastModified).format('DD/MM/YYYY HH:mm:ss')}
+					/>
+					<Checkbox checked={performOcr} onChange={(e) => setPerformOcr(e.target.checked)}>
+						Perform OCR
+					</Checkbox>
+					<Alert
+						type='warning'
+						message={
+							<p>
+								<b>Warning:</b> OCR processing can take a long time depending on the size of the
+								document.
+							</p>
+						}
+					/>
+				</Space>
 			</Modal>
 		</div>
 	);

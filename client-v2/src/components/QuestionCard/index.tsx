@@ -1,16 +1,20 @@
 import { FileTextOutlined } from '@ant-design/icons';
-import { Button, Card, Checkbox, Descriptions, Divider, Modal, Space, Tooltip, Typography, theme } from 'antd';
+import { Button, Card, Checkbox, Descriptions, Divider, Modal, Space, Tag, Tooltip, Typography, theme } from 'antd';
 import markdownit from 'markdown-it';
+import { useState } from 'react';
 import { useQuery } from 'react-query';
-import { Question } from '../../models/Question';
+import { Question, QuestionLevel } from '../../models/Question';
 import pageService from '../../services/page.service';
 import Loader from '../Loader';
-import { useState } from 'react';
 const md = markdownit();
 
 export type QuestionCardProps = {
 	question: Question;
 };
+
+function renderLevel(level: QuestionLevel) {
+	return <Tag color={level === 'easy' ? 'green' : level === 'medium' ? 'orange' : 'red'}>{level}</Tag>;
+}
 
 export default function QuestionCard({ question }: QuestionCardProps) {
 	const token = theme.useToken();
@@ -27,6 +31,7 @@ export default function QuestionCard({ question }: QuestionCardProps) {
 		<>
 			<Card type='inner' style={{ marginBottom: 10, border: `1px solid ${token.token.colorPrimary}` }}>
 				<div style={{ justifyContent: 'space-between', display: 'flex', alignItems: 'center' }}>
+					{renderLevel(question.level)}
 					<Typography style={{ fontWeight: 700, flex: 1 }}>{question.question}</Typography>
 					<Space>
 						<Tooltip title='Show context'>

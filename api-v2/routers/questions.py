@@ -2,6 +2,7 @@ import time, json
 
 from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
 
 import schemas, models, env, chain, templates
 
@@ -12,6 +13,12 @@ router = APIRouter(
     tags=['Questions'],
     dependencies=[Depends(get_db)]
 )
+
+class GenQuestionReq(BaseModel):
+    first_page: int
+    last_page: int
+
+MAX_PAGE_PER_GEN = 5
 
 def gen_questions_task(page: schemas.Page, db: Session):
     print(f'[Background tasks] Generate question for page {page.id}]')
@@ -56,7 +63,16 @@ def update_question_status_task(project_id: int, status: bool, db: Session):
     db.commit()
 
 @router.post('', summary='Generate list of questions for a project', response_model=list[schemas.Question])
-async def generate_questions(project_id: int, bg_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+async def generate_questions(project_id: int, body: GenQuestionReq, bg_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+    if body.first_page > body.last_page:
+        raise HTTPException(status_code=400, detail='First page must be smaller than last page')
+
+    if body.first_page < 1 or body.last_page < 1:
+        raise HTTPException(status_code=400, detail='First page and last page must be greater than 0')
+
+    if body.last_page - body.first_page > MAX_PAGE_PER_GEN:
+        raise HTTPException(status_code=400, detail=f'Number of pages must be smaller than {MAX_PAGE_PER_GEN}')
+
     project = db.query(models.Project).filter(models.Project.id == project_id).first()
 
     if project.in_ocr_process or project.in_question_process: # type: ignore
@@ -67,7 +83,7 @@ async def generate_questions(project_id: int, bg_tasks: BackgroundTasks, db: Ses
 
     bg_tasks.add_task(update_question_status_task, project_id, True, db) # Update project in_question_process to True
 
-    for page in project.pages:
+    for page in project.pages[body.first_page-1:body.last_page]:
         # Generate questions for each page
         bg_tasks.add_task(gen_questions_task, page, db)
 

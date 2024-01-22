@@ -1,3 +1,6 @@
+import os
+import time
+
 from fastapi import APIRouter, Depends, UploadFile, HTTPException, BackgroundTasks
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
@@ -8,7 +11,6 @@ from langchain.docstore.document import Document
 
 from dependencies import get_db
 import schemas, helpers
-import time
 import chain
 import models
 import env
@@ -29,7 +31,7 @@ def ocr_task(project_id: int, page_number: int, image: Image, db: Session):
 def update_project_ocr_status(project_id: int, status: bool, db: Session):
     print(f'[Background tasks] Project: {project_id} - Set in_ocr_process to {status}')
 
-    db.query(models.Project).filter(models.Project.id == project_id).update({'in_ocr_process': False})
+    db.query(models.Project).filter(models.Project.id == project_id).update({'in_ocr_process': status})
     db.commit()
 
 def update_title_task(project_id: int, db: Session):
@@ -74,7 +76,7 @@ async def create_project(file: UploadFile, bg_tasks: BackgroundTasks, use_ocr = 
         bg_tasks.add_task(update_project_ocr_status, project.id, False, db) # type: ignore # Set project in_ocr_process to False
         bg_tasks.add_task(update_title_task, project.id, db) # type: ignore # Update project title
     else:
-        pages = PyPDFLoader(filename).load_and_split()[:5]
+        pages = PyPDFLoader(filename).load_and_split()
 
         for i, page in enumerate(pages):
             db.add(models.Page(number=i+1, content=page.page_content, project_id=project.id))
@@ -83,22 +85,27 @@ async def create_project(file: UploadFile, bg_tasks: BackgroundTasks, use_ocr = 
         try:
             title = 'Dev title'
             if env.PRODUCT_ENV: # If in production, use title chain to get title
-                title = chain.title_chain.invoke({'context': pages}).strip()
+                title = chain.title_chain.invoke({'context': pages[:2]}).strip()
 
             db.query(models.Project).filter(models.Project.id == project.id).update({'title': title})
             db.commit()
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
-    return project
+    return db.query(models.Project).filter(models.Project.id == project.id).first()
 
 @router.get('', summary='Get all projects', response_model=list[schemas.Project])
 async def get_projects(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     return db.query(models.Project).offset(skip).limit(limit).all()
 
 @router.get('/{project_id}', summary='Get a project', response_model=schemas.Project)
-async def get_project(project_id: int, db: Session = Depends(get_db)):
-    return db.query(models.Project).filter(models.Project.id == project_id).first()
+async def get_project(project_id: int, db: Session = Depends(get_db)) -> schemas.Project:
+    project = db.query(models.Project).filter(models.Project.id == project_id).first()
+
+    if not project:
+        raise HTTPException(status_code=404, detail='Project not found')
+
+    return project
 
 @router.get('/{project_id}/text', summary='Get document text')
 async def get_docs_string(project_id: int, db: Session = Depends(get_db)) -> str:
@@ -126,7 +133,8 @@ async def delete_project_by_id(project_id, db: Session = Depends(get_db)):
     db.query(models.Question).filter(models.Question.project_id == project_id).delete() # Delete all questions of project
     db.query(models.Page).filter(models.Page.project_id == project_id).delete() # Delete all pages of project
 
-    db.query(models.Project).filter(models.Project.id == project_id).delete()
+    os.remove(str(project.filepath)) # Delete project file
+    db.query(models.Project).filter(models.Project.id == project_id).delete() # Delete project
     db.commit()
     return Response(status_code=204)
 

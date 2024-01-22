@@ -1,9 +1,11 @@
 import { Answer } from './Answer';
 import { Base } from './Base';
 
+export type QuestionLevel = 'easy' | 'medium' | 'hard';
+
 export type Question = Base & {
 	question: string;
-	level: 'easy' | 'medium' | 'hard';
+	level: QuestionLevel;
 
 	page_id: number;
 	answers: Answer[];
