@@ -108,7 +108,13 @@ async def get_questions(skip: int = 0, limit: int = 100, project_id=None, db: Se
 async def get_question(question_id: int, db: Session = Depends(get_db)):
     return db.query(models.Question).filter(models.Question.id == question_id).first()
 
-@router.delete('', summary='Delete all questions')
-async def delete_all_questions(db: Session = Depends(get_db)):
-    db.query(models.Question).delete()
+@router.delete('/{question_id}', summary='Delete a question')
+async def delete_question_by_id(question_id, db: Session = Depends(get_db)):
+    question = db.query(models.Question).filter(models.Question.id == question_id).first()
+
+    if not question:
+        raise HTTPException(status_code=404, detail='Question not found')
+
+    db.query(models.Answer).filter(models.Answer.question_id == question_id).delete()
+    db.query(models.Question).filter(models.Question.id == question_id).delete()
     db.commit()

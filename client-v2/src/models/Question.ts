@@ -7,6 +7,7 @@ export type Question = Base & {
 	question: string;
 	level: QuestionLevel;
 
+	project_id: number;
 	page_id: number;
 	answers: Answer[];
 };

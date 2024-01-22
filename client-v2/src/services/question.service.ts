@@ -54,6 +54,15 @@ class QuestionService extends BaseService {
 	async getAllQuestions(): Promise<Question[]> {
 		return await this.client.get('');
 	}
+
+	/**
+	 * Delete a question by ID
+	 * @param questionId - The ID of the question to delete
+	 * @returns - A promise that resolves to void
+	 */
+	async deleteQuestion(questionId: number): Promise<void> {
+		return await this.client.delete(`/${questionId}`);
+	}
 }
 
 export default new QuestionService() as QuestionService;
