@@ -29,9 +29,16 @@ export type QuestionCardProps = {
 	question: Question;
 };
 
-function renderLevel(level: QuestionLevel) {
-	return <Tag color={level === 'easy' ? 'green' : level === 'medium' ? 'orange' : 'red'}>{level}</Tag>;
-}
+export const renderLevel = (level: QuestionLevel) => {
+	return (
+		<Tag
+			color={level === 'easy' ? 'green' : level === 'medium' ? 'orange' : 'red'}
+			style={{ textTransform: 'capitalize' }}
+		>
+			{level}
+		</Tag>
+	);
+};
 
 export default function QuestionCard({ question }: QuestionCardProps) {
 	const token = theme.useToken();
@@ -76,9 +83,7 @@ export default function QuestionCard({ question }: QuestionCardProps) {
 							}}
 							onConfirm={handleDeleteQuestion}
 						>
-							<Tooltip title='Delete'>
-								<Button icon={<DeleteOutlined />} danger type='primary' shape='circle'></Button>
-							</Tooltip>
+							<Button icon={<DeleteOutlined />} danger type='primary' shape='circle' />
 						</Popconfirm>
 
 						<Tooltip title='Show context'>
@@ -106,7 +111,6 @@ export default function QuestionCard({ question }: QuestionCardProps) {
 			<Modal
 				open={isOpenContext}
 				width={800}
-				destroyOnClose
 				title={`Context of ${question.question}`}
 				onCancel={() => setIsOpenContext(false)}
 				okButtonProps={{ hidden: true }}

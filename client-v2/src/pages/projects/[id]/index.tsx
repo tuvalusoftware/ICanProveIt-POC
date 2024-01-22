@@ -1,15 +1,29 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { QuestionCircleOutlined, ReloadOutlined } from '@ant-design/icons';
+import { CheckCircleOutlined, QuestionCircleOutlined, ReloadOutlined } from '@ant-design/icons';
 import { Viewer, Worker } from '@react-pdf-viewer/core';
 import '@react-pdf-viewer/core/lib/styles/index.css';
 import { defaultLayoutPlugin } from '@react-pdf-viewer/default-layout';
 import '@react-pdf-viewer/default-layout/lib/styles/index.css';
-import { Alert, Button, Col, Descriptions, Empty, Modal, Row, Select, Slider, Space, Typography, message } from 'antd';
+import {
+	Alert,
+	Button,
+	Col,
+	Descriptions,
+	Empty,
+	Modal,
+	Row,
+	Select,
+	Slider,
+	Space,
+	Tag,
+	Typography,
+	message,
+} from 'antd';
 import { useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useParams } from 'react-router-dom';
 import Loader from '../../../components/Loader';
-import QuestionCard from '../../../components/QuestionCard';
+import QuestionCard, { renderLevel } from '../../../components/QuestionCard';
 import { QuestionLevel } from '../../../models/Question';
 import projectService from '../../../services/project.service';
 import questionService from '../../../services/question.service';
@@ -112,6 +126,20 @@ export default function ProjectPage() {
 								>
 									Reload
 								</Button>
+
+								<Select<FilterType>
+									value={filter}
+									style={{ width: 200 }}
+									menuItemSelectedIcon={<CheckCircleOutlined />}
+									onSelect={setFilter}
+								>
+									<Select.Option key='all'>
+										<Tag>All</Tag>All
+									</Select.Option>
+									<Select.Option key='easy'>{renderLevel('easy')}Easy</Select.Option>
+									<Select.Option key='medium'>{renderLevel('medium')}Medium</Select.Option>
+									<Select.Option key='hard'>{renderLevel('hard')}Hard</Select.Option>
+								</Select>
 							</Space>
 
 							{isLoadingQuestions && <Loader />}
@@ -133,17 +161,6 @@ export default function ProjectPage() {
 										</Empty>
 									) : (
 										<Space direction='vertical' style={{ width: '100%' }}>
-											<Select<FilterType>
-												value={filter}
-												style={{ width: 200 }}
-												onSelect={setFilter}
-											>
-												<Select.Option key='all'>All</Select.Option>
-												<Select.Option key='easy'>Easy</Select.Option>
-												<Select.Option key='medium'>Medium</Select.Option>
-												<Select.Option key='hard'>Hard</Select.Option>
-											</Select>
-
 											{filteredQuestions.map((question) => (
 												<QuestionCard question={question} key={question.id} />
 											))}
