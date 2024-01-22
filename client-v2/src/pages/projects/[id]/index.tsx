@@ -1,5 +1,10 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { CheckCircleOutlined, QuestionCircleOutlined, ReloadOutlined } from '@ant-design/icons';
+import {
+	CheckCircleOutlined,
+	FileOutlined,
+	FilePdfOutlined,
+	QuestionCircleOutlined,
+	ReloadOutlined,
+} from '@ant-design/icons';
 import { Viewer, Worker } from '@react-pdf-viewer/core';
 import '@react-pdf-viewer/core/lib/styles/index.css';
 import { defaultLayoutPlugin } from '@react-pdf-viewer/default-layout';
@@ -15,6 +20,7 @@ import {
 	Select,
 	Slider,
 	Space,
+	Tabs,
 	Tag,
 	Typography,
 	message,
@@ -95,20 +101,62 @@ export default function ProjectPage() {
 			{project && (
 				<Row>
 					<Col span={24} lg={12} style={{ padding: 10 }}>
-						<Worker workerUrl='https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.worker.min.js'>
-							<div className={styles.pdfWrapper}>
-								<Viewer
-									key={project.id}
-									fileUrl={projectService.getPdfUrl(project.id)}
-									renderLoader={() => <Loader />}
-									plugins={[defaultLayoutPluginInstance]}
-									onDocumentAskPassword={() => {
-										const password = window.prompt('Password?');
-										return password;
-									}}
-								/>
-							</div>
-						</Worker>
+						<div className={styles.pdfWrapper}>
+							<Tabs
+								items={[
+									{
+										key: 'original',
+										label: 'Original',
+										children: (
+											<div style={{ height: '80vh' }}>
+												<Worker workerUrl='https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.worker.min.js'>
+													<Viewer
+														key={project.id}
+														fileUrl={projectService.getPdfUrl(project.id)}
+														renderLoader={() => <Loader />}
+														plugins={[defaultLayoutPluginInstance]}
+														onDocumentAskPassword={() => {
+															const password = window.prompt('Password?');
+															return password;
+														}}
+													/>
+												</Worker>
+											</div>
+										),
+										icon: <FilePdfOutlined />,
+									},
+									{
+										key: 'extracted',
+										label: 'Extracted',
+										children: (
+											<div style={{ height: '80vh', overflow: 'auto', background: '#f6f6f6' }}>
+												{project.pages.map((page) => (
+													<div
+														key={page.id}
+														style={{
+															width: '100%',
+															maxWidth: '21cm',
+															margin: '10px auto',
+															aspectRatio: 210 / 297,
+															padding: '2cm',
+															boxShadow: '0 0 5px #00000033',
+															display: 'flex',
+															flexDirection: 'column',
+															justifyContent: 'space-between',
+															background: '#fff',
+														}}
+													>
+														<div dangerouslySetInnerHTML={{ __html: page.content }} />
+														<div style={{ textAlign: 'center' }}>{page.number}</div>
+													</div>
+												))}
+											</div>
+										),
+										icon: <FileOutlined />,
+									},
+								]}
+							/>
+						</div>
 					</Col>
 
 					<Col span={24} lg={12} style={{ padding: 10 }}>
