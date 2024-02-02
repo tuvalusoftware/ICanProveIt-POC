@@ -2,7 +2,7 @@ module.exports = {
     apps: [
         {
             name: "api",
-            script: "poetry run uvicorn main:app --host 0.0.0.0 --port 8080",
+            script: "poetry run uvicorn main:app --host 0.0.0.0",
             cwd: "./api-v2",
         },
         {
